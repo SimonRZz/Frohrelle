@@ -1,52 +1,56 @@
 # Firmware
 
-`CWPaddleMIDI/CWPaddleMIDI.ino` – Arduino-Sketch für ESP32-S3 mit nativem USB.
+`CWPaddleMIDI/CWPaddleMIDI.ino`, an Arduino sketch for the ESP32-S3 with native
+USB.
 
 ## Arduino IDE
 
-1. Boardpaket **esp32 by Espressif Systems** installieren (Version 3.x).
-2. Board: *ESP32S3 Dev Module* (oder das konkrete Board).
-3. Wichtige Einstellungen im Menü *Tools*:
-   - **USB Mode: USB-OTG (TinyUSB)** – zwingend, sonst existiert `USBMIDI` nicht.
-   - **USB CDC On Boot: Enabled** – bequem, damit der Port nach dem Flashen bleibt.
-   - **Upload Mode: UART0 / Hardware CDC**
-4. Hochladen. Reagiert das Board nach dem Flashen nicht mehr als serieller Port:
-   BOOT gedrückt halten, RESET tippen, loslassen – dann erneut flashen.
+1. Install the **esp32 by Espressif Systems** board package, version 3.x.
+2. Board: *ESP32S3 Dev Module*, or whatever your board actually is.
+3. Settings that matter, under *Tools*:
+   * **USB Mode: USB-OTG (TinyUSB)**, required, otherwise `USBMIDI` does not exist.
+   * **USB CDC On Boot: Enabled**, convenient so the port survives flashing.
+   * **Upload Mode: UART0 / Hardware CDC**
+4. Upload. If the board stops showing up as a serial port afterwards: hold BOOT,
+   tap RESET, let go, then flash again.
 
 ## PlatformIO
 
-Die mitgelieferte `platformio.ini` setzt die nötigen Build-Flags bereits.
-Der Sketch liegt unter `firmware/CWPaddleMIDI/`; PlatformIO ist in der
-`platformio.ini` auf dieses Verzeichnis als `src_dir` eingestellt.
+`platformio.ini` in the repository root already carries the build flags you need
+and points `src_dir` at `firmware/CWPaddleMIDI/`.
 
 ```
 pio run -t upload
 ```
 
-## Was der Sketch tut
+## What the sketch does
 
-- Pollt GPIO4 (DIT) und GPIO5 (DAH) in der Hauptschleife, ohne Interrupts.
-- Eine Pegeländerung wird erst akzeptiert, wenn sie **150 µs** stabil anliegt
-  (`EDGE_CONFIRM_US`). Zappelt der Pegel in dieser Zeit, verfällt der Kandidat.
-- Akzeptierte Flanken erzeugen sofort MIDI-Events:
-  - LOW (gedrückt) → `Note On`, Velocity 127
-  - HIGH (losgelassen) → `Note Off`, Velocity 0
-- Noten: **20 = DIT**, **21 = DAH**, MIDI-Kanal **1**.
+* Polls GPIO4 (DIT) and GPIO5 (DAH) in the main loop. No interrupts.
+* Accepts a level change only after it has held for **150 us**
+  (`EDGE_CONFIRM_US`). If the level moves again inside that window, the candidate
+  edge is dropped.
+* Turns accepted edges straight into MIDI events:
+  * LOW (pressed) sends `Note On`, velocity 127
+  * HIGH (released) sends `Note Off`, velocity 0
+* Notes: **20 = DIT**, **21 = DAH**, MIDI channel **1**.
 
-Es wird bewusst kein Keyer, kein Timing und kein Zeichenspeicher in der Firmware
-gerechnet. Das Interface meldet nur "Kontakt zu" und "Kontakt auf" – das Timing
-macht der Keyer im Transceiver.
+There is deliberately no keyer, no timing and no message memory on the device. It
+reports "contact closed" and "contact open" and nothing else. The timing is the
+job of the keyer in the transceiver.
 
-## Anpassen
+## Things you can change
 
-| Stelle im Sketch            | Zweck                                             |
-|-----------------------------|---------------------------------------------------|
-| `PIN_DIT`, `PIN_DAH`        | GPIO-Zuordnung                                    |
-| `NOTE_DIT`, `NOTE_DAH`      | MIDI-Notennummern                                 |
-| `MIDI_CHANNEL`              | MIDI-Kanal                                        |
-| `EDGE_CONFIRM_US`           | Entprellzeit in Mikrosekunden                     |
-| `USB.productName(...)`      | Name, unter dem das Gerät in der MIDI-Liste steht |
-| `USB.manufacturerName(...)` | Herstellerstring im USB-Deskriptor                |
+| Constant in the sketch | What it does                                |
+|------------------------|---------------------------------------------|
+| `PIN_DIT`, `PIN_DAH`   | GPIO assignment                             |
+| `NOTE_DIT`, `NOTE_DAH` | MIDI note numbers                           |
+| `MIDI_CHANNEL`         | MIDI channel                                |
+| `EDGE_CONFIRM_US`      | debounce time in microseconds               |
+| `USB_PRODUCT_NAME`     | name the device appears under in the MIDI list |
+| `USB_MANUFACTURER`     | manufacturer string in the USB descriptor   |
 
-Paddle seitenverkehrt? Entweder `PIN_DIT` und `PIN_DAH` tauschen oder die
-Paddle-Umkehr in der Station-Software nutzen.
+Changing `USB_PRODUCT_NAME` means SmartSDR sees a different device, so you have
+to select it again in the MIDI settings.
+
+Paddle the wrong way round? Either swap `PIN_DIT` and `PIN_DAH`, or use the
+paddle reverse setting in your station software.

@@ -1,70 +1,68 @@
 # Hardware
 
-Zwei identische Eingangskanäle, einer für DIT (TIP), einer für DAH (RING).
-Sleeve liegt gemeinsam auf Masse.
+Two identical input channels, one for DIT (tip) and one for DAH (ring). Sleeve is
+the common ground.
 
-![Schaltplan](schematic.svg)
+![Schematic](schematic.svg)
 
-## Schaltplan (Textform)
+## Schematic as text
 
 ```
-3,5-mm-TRS                      ESP32-S3
+3.5 mm TRS                      ESP32-S3
 
-TIP ---- 1 kΩ -------+-------- GPIO4  (DIT)
+TIP ---- 1k ---------+-------- GPIO4  (DIT)
                      |
-                     +-- 10 kΩ -- 3,3 V
+                     +-- 10k --- 3.3 V
                      |
-                     +-- 1 nF --- GND
+                     +-- 1nF --- GND
 
 
-RING --- 1 kΩ -------+-------- GPIO5  (DAH)
+RING --- 1k ---------+-------- GPIO5  (DAH)
                      |
-                     +-- 10 kΩ -- 3,3 V
+                     +-- 10k --- 3.3 V
                      |
-                     +-- 1 nF --- GND
+                     +-- 1nF --- GND
 
 
 SLEEVE ---------------------- GND
 ```
 
-## Stückliste
+## Bill of materials
 
-| Menge | Bauteil                          | Bemerkung                                    |
-|------:|----------------------------------|----------------------------------------------|
-|     1 | ESP32-S3-Board mit nativem USB   | z. B. ESP32-S3-DevKitC-1, USB-C am S3 (nicht am UART-Chip) |
-|     1 | 3,5-mm-Klinkenbuchse, stereo     | TRS, für das Paddle-Kabel                     |
-|     2 | Widerstand 1 kΩ                  | Serienwiderstand in TIP und RING              |
-|     2 | Widerstand 10 kΩ                 | Pull-up nach 3,3 V                            |
-|     2 | Kondensator 1 nF                 | nach GND, direkt am Pin                       |
-|     1 | Gehäuse                          | beliebig, Buchse und USB-Anschluss herausführen |
+| Qty | Part                              | Notes                                                   |
+|----:|-----------------------------------|---------------------------------------------------------|
+|   1 | ESP32-S3 board with native USB    | e.g. ESP32-S3-DevKitC-1, USB-C wired to the S3 itself, not to the UART chip |
+|   1 | 3.5 mm stereo jack socket         | TRS, for the paddle lead                                 |
+|   2 | Resistor, 1 kOhm                  | in series with tip and ring                              |
+|   2 | Resistor, 10 kOhm                 | pull-up to 3.3 V                                         |
+|   2 | Capacitor, 1 nF                   | to ground, right at the pin                              |
+|   1 | Enclosure                         | anything, as long as the jack and the USB port come out  |
 
-## Warum diese Bauteile
+## Why these parts
 
-**10 kΩ Pull-up nach 3,3 V** – der Eingang liegt im Ruhezustand sauber auf HIGH.
-Schließt der Paddle-Kontakt gegen Sleeve/GND, geht der Pin auf LOW. Der externe
-Pull-up wird bewusst verwendet, statt sich auf den internen Pull-up des Reglers zu
-verlassen: er ist definiert niederohmig genug, um an einem längeren, offen
-liegenden Paddlekabel HF-fest zu bleiben. Im Sketch ist der Pin deshalb als
-`INPUT` (ohne internen Pull-up) konfiguriert.
+**10 kOhm pull-up to 3.3 V.** The input sits cleanly at HIGH when nothing is
+happening, and goes LOW when the paddle contact closes to sleeve. The pull-up is
+external on purpose rather than the controller's internal one: it is reliably low
+impedance enough to stay put with a long, exposed paddle lead hanging off it in
+an RF field. The pin is configured as plain `INPUT` in the sketch for that
+reason, with no internal pull-up.
 
-**1 kΩ in Reihe** – begrenzt den Strom in die Schutzdioden des Controllers, wenn
-am Kabel statische Entladung oder HF-Einstreuung ankommt. Der Spannungsteiler
-1 kΩ / 10 kΩ liefert im geschlossenen Zustand rund 0,3 V am Pin, also sicher
-unter der LOW-Schwelle.
+**1 kOhm in series.** Limits the current into the controller's protection diodes
+when static discharge or RF arrives on the lead. With the contact closed, the 1k
+/ 10k divider leaves about 0.3 V at the pin, comfortably below the LOW threshold.
 
-**1 nF nach GND** – bildet mit den Widerständen einen Tiefpass. Fallende Flanke
-(Kontakt schließt) mit τ ≈ 1 µs, steigende Flanke (Kontakt öffnet) mit
-τ ≈ 10 µs. Das ist um Größenordnungen schneller als jedes Tastzeichen, dämpft
-aber HF aus der eigenen Endstufe und die schnellsten Kontaktprellungen. Der
-Kondensator gehört so dicht wie möglich an den GPIO-Pin.
+**1 nF to ground.** Together with the resistors this forms a low-pass filter. The
+falling edge (contact closes) has a time constant of roughly 1 us, the rising
+edge (contact opens) roughly 10 us. That is orders of magnitude faster than any
+keyed element, but it swallows RF from your own PA and the fastest contact
+bounce. Mount the capacitor as close to the GPIO pin as you can.
 
-## Aufbauhinweise
+## Build notes
 
-- Das USB-Kabel am **nativen** USB-Port des ESP32-S3 anschließen. Der zweite Port
-  vieler Boards hängt an einem UART-Brücken-IC und kann kein USB-MIDI.
-- Paddlekabel kurz halten und die Masse der Buchse sternförmig auf die Board-Masse
-  führen.
-- Wer bei hoher Leistung arbeitet: Ferritkern über das Paddlekabel und über das
-  USB-Kabel dicht am Gehäuse.
-- Bei einem Single-Lever-Paddle oder einer Handtaste nur TIP belegen; RING bleibt
-  über den Pull-up auf HIGH und sendet nie.
+* Use the **native** USB port of the ESP32-S3. On many boards the second port
+  goes through a UART bridge chip and cannot do USB MIDI at all.
+* Keep the paddle lead short and star the jack ground back to the board ground.
+* Running high power? Put a ferrite on the paddle lead and another on the USB
+  cable, both close to the enclosure.
+* With a single lever paddle or a straight key, wire tip only. Ring stays HIGH
+  through its pull-up and never sends anything.

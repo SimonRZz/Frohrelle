@@ -1,146 +1,136 @@
-# Frohrelle — CW-Paddle-Interface über USB-MIDI
+# Frohrelle
 
-Ein kleines Selbstbau-Interface, das ein klassisches CW-Paddle über USB an den
-Rechner bringt. Das Paddle wird als **USB-MIDI-Gerät** angemeldet: Jedes
-Schließen und Öffnen eines Paddle-Kontakts erzeugt sofort ein MIDI-Event, das
-SmartSDR als Dit bzw. Dah auswertet und an den Keyer im Transceiver weitergibt.
+A homebrew CW paddle interface. An ESP32-S3 registers itself on the computer as
+a USB MIDI device and reports both paddle contacts as MIDI notes. SmartSDR reads
+them as dit and dah and passes them to the keyer in the radio.
 
-Hardware: ein ESP32-S3 mit nativem USB, eine 3,5-mm-Klinkenbuchse und eine
-Handvoll passiver Bauteile.
+You need an ESP32-S3 board with native USB, a 3.5 mm stereo jack and a handful of
+passive parts.
 
----
+## Why bother
 
-## Wozu das gut ist
+With SmartSDR the operator and the radio are often not in the same room, so the
+paddle has to plug into the PC that runs SmartSDR rather than into the
+transceiver. That is the gap this little box fills.
 
-Beim netzwerkbasierten Betrieb (SmartSDR und Transceiver getrennt, oft über LAN
-oder Remote) liegt das Paddle dort, wo der Operator sitzt — nicht am Gerät. Genau
-diese Lücke schließt das Interface:
+A few things it gets right:
 
-- **Kein zusätzliches Keyer-Kabel.** Das Paddle hängt an demselben Rechner, auf
-  dem SmartSDR läuft. Kein serieller Adapter, kein extra Netzteil.
-- **Keine Treiber.** USB-MIDI ist eine Standard-Geräteklasse. Windows, macOS und
-  Linux erkennen das Interface sofort, ohne Installation und ohne COM-Port-Gerangel.
-- **Das Timing bleibt im Transceiver.** Das Interface überträgt nur "Kontakt zu"
-  und "Kontakt auf". Gewichtung, Geschwindigkeit, Iambic A/B, Zeichenspeicher und
-  vor allem der Sidetone werden weiterhin vom Keyer im Radio erzeugt. Damit bleibt
-  das Mithörzeichen frei von den Schwankungen, die entstehen, wenn ein PC das
-  Zeichen selbst formt.
-- **Sofortige Reaktion.** MIDI-Events werden ohne Sammelpuffer gesendet, sobald
-  eine Flanke bestätigt ist. Die Entprellung wirkt in Mikrosekunden, nicht in
-  Millisekunden.
-- **Vollwertiges Paddle statt Tastatur.** Iambic-Betrieb mit dem gewohnten eigenen
-  Paddle, auch beim Contest und beim Pile-Up, statt Makro-Tasten oder Winkeyer-Ersatz.
-- **Nachbaubar und offen.** Alle Bauteile sind Standardware, die Firmware ist ein
-  einziger Arduino-Sketch, alle Parameter (Pins, Noten, Kanal, Entprellzeit,
-  Gerätename) stehen als Konstanten oben im Code.
+* USB MIDI is a standard device class. Windows, macOS and Linux pick the
+  interface up on their own. Nothing to install, no driver, no COM port juggling,
+  no second power supply.
+* The interface only ever reports "contact closed" and "contact open". Speed,
+  weighting, iambic mode, message memories and above all the sidetone stay in the
+  radio. The sidetone therefore does not wobble the way it does when a PC forms
+  the characters itself.
+* Events go out the moment an edge is confirmed. Nothing is buffered up, and the
+  debounce works in microseconds rather than milliseconds.
+* You key with your own paddle, iambic, exactly as you are used to, instead of
+  reaching for keyboard macros during a pile-up.
+* Every part is standard stock. The firmware is a single Arduino sketch, and the
+  pins, notes, channel, debounce time and device name are all constants at the
+  top of it.
 
-Der Aufbau eignet sich als kleines Dauer-Interface an der Station genauso wie als
-Portabellösung im Rucksack: ein Board, ein Kabel, kein Setup am Zielrechner.
+It works equally well as a permanent fixture at the station and as something you
+throw in a rucksack: one board, one cable, and nothing to set up on whatever
+computer you plug it into.
 
----
-
-## Funktionsprinzip
+## How it works
 
 ```
-   Paddle          Interface                       Rechner            Transceiver
-  ┌────────┐     ┌──────────────┐               ┌──────────┐        ┌───────────┐
-  │  DIT   ├─────┤ GPIO4        │   USB-MIDI    │          │  LAN   │  Keyer,   │
-  │  DAH   ├─────┤ GPIO5  ESP32 ├──────────────►│ SmartSDR ├───────►│  Sidetone │
-  │  GND   ├─────┤ GND      -S3 │  Note 20/21   │          │        │  TX       │
-  └────────┘     └──────────────┘               └──────────┘        └───────────┘
+   Paddle          Interface                       Computer           Transceiver
+  +--------+     +--------------+               +----------+        +-----------+
+  |  DIT   |-----| GPIO4        |   USB MIDI    |          |  LAN   |  keyer,   |
+  |  DAH   |-----| GPIO5  ESP32 |-------------->| SmartSDR |------->|  sidetone |
+  |  GND   |-----| GND      -S3 |  note 20/21   |          |        |  TX       |
+  +--------+     +--------------+               +----------+        +-----------+
 ```
 
-Beide Paddle-Kontakte liegen über einen 10-kΩ-Pull-up an 3,3 V und werden beim
-Drücken gegen Masse gezogen. Die Firmware pollt beide Pins in der Hauptschleife:
+Both paddle contacts sit at 3.3 V through a 10 kOhm pull-up and are pulled to
+ground when you press the paddle. The firmware polls both pins in the main loop:
 
-| Vorgang            | Pegel am Pin | MIDI-Nachricht                    |
-|--------------------|--------------|-----------------------------------|
-| DIT gedrückt       | LOW          | `Note On` 20, Velocity 127, Kan. 1 |
-| DIT losgelassen    | HIGH         | `Note Off` 20, Velocity 0, Kan. 1  |
-| DAH gedrückt       | LOW          | `Note On` 21, Velocity 127, Kan. 1 |
-| DAH losgelassen    | HIGH         | `Note Off` 21, Velocity 0, Kan. 1  |
+| Action          | Pin level | MIDI message                        |
+|-----------------|-----------|-------------------------------------|
+| DIT pressed     | LOW       | `Note On` 20, velocity 127, channel 1 |
+| DIT released    | HIGH      | `Note Off` 20, velocity 0, channel 1  |
+| DAH pressed     | LOW       | `Note On` 21, velocity 127, channel 1 |
+| DAH released    | HIGH      | `Note Off` 21, velocity 0, channel 1  |
 
-Eine Pegeländerung wird erst gesendet, wenn sie **150 µs** ununterbrochen anliegt.
-Kürzeres Zappeln — Kontaktprellen, HF-Einstreuung — wird verworfen, ohne dass
-echte Flanken merklich verzögert werden. Bei 40 WpM dauert ein Dit rund 30 ms,
-die Entprellzeit liegt also bei etwa 0,5 % eines Punktes.
+A level change is only sent once it has held for **150 us**. Anything shorter,
+contact bounce or RF pickup, gets thrown away, and real edges are not delayed in
+any way you could notice. At 40 WPM a dit lasts roughly 30 ms, so the debounce
+window is about 0.5 % of a dot.
 
----
+## Connections
 
-## Belegung
+3.5 mm stereo (TRS) plug:
 
-**Klinkenstecker 3,5 mm (TRS)**
+| Contact | Function           | GPIO |
+|---------|--------------------|------|
+| Tip     | DIT / left paddle  | 4    |
+| Ring    | DAH / right paddle | 5    |
+| Sleeve  | ground             | GND  |
 
-| Kontakt | Funktion            | GPIO |
-|---------|---------------------|------|
-| Tip     | DIT / linkes Paddle | 4    |
-| Ring    | DAH / rechtes Paddle| 5    |
-| Sleeve  | Masse               | GND  |
+## Building it
 
----
+Schematic, bill of materials and the reasoning behind each part are in
+[hardware/](hardware/).
 
-## Aufbau
-
-Schaltplan, Stückliste und die Begründung für jedes Bauteil: **[hardware/](hardware/)**
-
-Kurzfassung je Kontakt: 1 kΩ in Reihe zum GPIO, 10 kΩ als Pull-up nach 3,3 V,
-1 nF nach GND direkt am Pin. Sleeve geht ohne Umweg auf GND.
-
----
+The short version, once per contact: 1 kOhm in series with the GPIO, 10 kOhm as a
+pull-up to 3.3 V, 1 nF to ground right at the pin. Sleeve goes straight to GND.
 
 ## Firmware
 
-Sketch, Flash-Anleitung und Einstellmöglichkeiten: **[firmware/](firmware/)**
+The sketch, flashing instructions and the knobs you can turn are in
+[firmware/](firmware/).
 
-Wichtig beim Flashen: Der ESP32-S3 muss im Modus **USB-OTG (TinyUSB)** gebaut
-werden, sonst steht die USB-MIDI-Klasse nicht zur Verfügung. Das USB-Kabel gehört
-an den nativen USB-Port des S3, nicht an den UART-Brücken-Port.
+Two things matter when flashing. The ESP32-S3 has to be built in **USB-OTG
+(TinyUSB)** mode, otherwise the USB MIDI class is not available at all. And the
+cable belongs on the native USB port of the S3, not on the UART bridge port that
+many boards also carry.
 
----
+## Setting it up in SmartSDR
 
-## Einrichtung in SmartSDR
+1. Plug the interface in. It appears as a MIDI input on the computer.
+2. In SmartSDR, select or enable the MIDI device and point it at the slice you
+   want to key.
+3. Switch to CW, then set keyer speed and iambic mode in the radio as usual and
+   pick your break-in setting.
+4. Test it with the PA off first. The sidetone should start while the paddle is
+   closed and stop the instant you let go.
 
-1. Interface anstecken. Es meldet sich als MIDI-Eingang am Rechner an.
-2. In SmartSDR das MIDI-Gerät auswählen bzw. aktivieren und dem Slice zuordnen,
-   der getastet werden soll.
-3. CW-Modus wählen, Keyer-Geschwindigkeit und Iambic-Modus wie gewohnt im
-   Radio einstellen, Break-In nach Geschmack.
-4. Funktionstest zunächst ohne Sendeleistung: Bei gedrücktem Paddle muss der
-   Sidetone stehen, beim Loslassen sofort aufhören.
+If you want to know whether the notes leave the interface at all, any MIDI
+monitor will tell you, independently of SmartSDR: pressing should produce
+`Note On 20` or `21`, releasing the matching `Note Off`.
 
-Ob die Zeichen überhaupt ankommen, lässt sich unabhängig von SmartSDR mit einem
-beliebigen MIDI-Monitor prüfen: Beim Drücken muss `Note On 20` bzw. `21`
-erscheinen, beim Loslassen das passende `Note Off`.
+## Troubleshooting
 
----
+| Symptom                                    | Cause and cure                                                                  |
+|--------------------------------------------|---------------------------------------------------------------------------------|
+| No MIDI device shows up                    | Cable on the UART port instead of the native USB port, or firmware built without TinyUSB mode |
+| Continuous tone right after plugging in    | Paddle contact closed, sleeve not on ground, or a missing pull-up                |
+| Dit and dah swapped                        | Swap `PIN_DIT` and `PIN_DAH` in the sketch, or use the paddle reverse setting in software |
+| Characters only break up while transmitting | RF getting in: ferrite on the paddle lead and the USB cable, and keep the 1 nF caps close to the pins |
+| Occasional doubled elements                | Bouncy paddle contacts: raise `EDGE_CONFIRM_US` step by step, 500 us is a good next try |
+| Compiler does not know `USBMIDI`           | The *USB Mode* board setting is not on *USB-OTG (TinyUSB)*                       |
 
-## Fehlersuche
-
-| Symptom                                   | Ursache / Abhilfe                                                                 |
-|-------------------------------------------|-----------------------------------------------------------------------------------|
-| Kein MIDI-Gerät am Rechner                | Kabel am UART-Port statt am nativen USB-Port; oder Build ohne TinyUSB-Modus        |
-| Dauerton / Dauerzeichen direkt nach dem Anstecken | Paddle-Kontakt geschlossen, Sleeve nicht auf GND, oder Pull-up fehlt        |
-| Dit und Dah vertauscht                    | `PIN_DIT` / `PIN_DAH` im Sketch tauschen oder Paddle-Umkehr in der Software nutzen |
-| Zeichen stottern nur beim Senden          | HF-Einstreuung: Ferrit auf Paddle- und USB-Kabel, 1-nF-Kondensatoren dicht an die Pins |
-| Gelegentliche Doppelzeichen               | Prellende Paddle-Kontakte: `EDGE_CONFIRM_US` schrittweise erhöhen (z. B. 500 µs)    |
-| Compilerfehler `USBMIDI` unbekannt        | Board-Einstellung *USB Mode* steht nicht auf *USB-OTG (TinyUSB)*                   |
-
----
-
-## Projektstruktur
+## Repository layout
 
 ```
-firmware/CWPaddleMIDI/CWPaddleMIDI.ino   Arduino-Sketch
-firmware/README.md                       Flashen und Anpassen
-hardware/schematic.svg                   Schaltplan
-hardware/README.md                       Stückliste und Bauteilbegründung
-platformio.ini                           Build-Konfiguration für PlatformIO
+firmware/CWPaddleMIDI/CWPaddleMIDI.ino   Arduino sketch
+firmware/README.md                       flashing and customising
+hardware/schematic.svg                   schematic
+hardware/README.md                       bill of materials, part by part reasoning
+platformio.ini                           build configuration for PlatformIO
 ```
-
----
 
 ## Status
 
-Funktionsfähige Arbeitsversion. Die Firmware arbeitet bewusst ohne
-Timing-Aufbereitung und ohne zusätzlichen Bounce-Guard; die Entprellung besteht
-aus der 150-µs-Flankenbestätigung und dem RC-Glied am Eingang.
+Working version, in use. The firmware deliberately does no timing work and has no
+extra bounce guard beyond the 150 us edge confirmation and the RC network on the
+input.
+
+## License
+
+Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0), see
+[LICENSE](LICENSE). Build it, modify it, pass it on, just do not sell it and do
+not put it into something you sell.

@@ -1,20 +1,20 @@
 /*
-  SmartSDR CW Paddle Interface
+  CW Paddle Interface for SmartSDR
   ESP32-S3 -> USB MIDI -> SmartSDR
 
   Paddle:
-    TIP    = DIT / Left Paddle
-    RING   = DAH / Right Paddle
+    TIP    = DIT / left paddle
+    RING   = DAH / right paddle
     SLEEVE = GND
 
-  SmartSDR / HaliKey Mapping:
-    Note 20 = DIT / Left Paddle
-    Note 21 = DAH / Right Paddle
+  Note mapping:
+    Note 20 = DIT / left paddle
+    Note 21 = DAH / right paddle
 
-  Diese Testversion verwendet:
-    - kein MoMIDI-Timing
-    - keinen Bounce-Guard
-    - 150 us Flankenbestaetigung
+  This version deliberately keeps things simple:
+    - no keyer or timing logic on the device
+    - no extra bounce guard
+    - 150 us edge confirmation
 */
 
 #include <Arduino.h>
@@ -23,10 +23,23 @@
 
 
 // ------------------------------------------------------------
+// USB identity
+// ------------------------------------------------------------
+
+// This is the name the device shows up under in the MIDI device
+// list. Change it if you like, but remember that SmartSDR stores
+// its MIDI assignment per device name, so you have to select the
+// device again afterwards.
+
+constexpr char USB_PRODUCT_NAME[] = "Frohrelle CW";
+constexpr char USB_MANUFACTURER[] = "Frohrelle";
+
+
+// ------------------------------------------------------------
 // USB MIDI
 // ------------------------------------------------------------
 
-USBMIDI MIDI("HaliKey MIDI");
+USBMIDI MIDI(USB_PRODUCT_NAME);
 
 constexpr uint8_t MIDI_CHANNEL = 1;
 
@@ -40,7 +53,7 @@ constexpr uint8_t PIN_DAH = 5;
 
 
 // ------------------------------------------------------------
-// MIDI Notes wie beim HaliKey
+// MIDI notes
 // ------------------------------------------------------------
 
 constexpr uint8_t NOTE_DIT = 20;
@@ -51,14 +64,14 @@ constexpr uint8_t NOTE_DAH = 21;
 // Debounce
 // ------------------------------------------------------------
 
-// Eine Zustandsaenderung muss mindestens 150 us stabil sein,
-// bevor sie als echte Paddle-Flanke akzeptiert wird.
+// A level change has to stay put for at least 150 us before it
+// counts as a real paddle edge.
 
 constexpr uint32_t EDGE_CONFIRM_US = 150;
 
 
 // ------------------------------------------------------------
-// Paddle-Zustand
+// Paddle state
 // ------------------------------------------------------------
 
 struct PaddleInput
@@ -66,15 +79,15 @@ struct PaddleInput
     uint8_t pin;
     uint8_t note;
 
-    // letzter bestaetigter Zustand
+    // last confirmed level
     bool stableState;
 
-    // momentan beobachteter moeglicher neuer Zustand
+    // level currently under observation
     bool candidateState;
 
     bool candidateActive;
 
-    // Zeitpunkt des Beginns der moeglichen Flanke
+    // when the possible edge started
     uint32_t candidateStartUs;
 };
 
@@ -84,7 +97,7 @@ PaddleInput dah;
 
 
 // ------------------------------------------------------------
-// MIDI Event
+// MIDI event
 // ------------------------------------------------------------
 
 struct PaddleEvent
@@ -96,7 +109,7 @@ struct PaddleEvent
 
 
 // ------------------------------------------------------------
-// Paddle initialisieren
+// Set up one paddle input
 // ------------------------------------------------------------
 
 void initPaddle(
@@ -108,7 +121,7 @@ void initPaddle(
     p.pin = pin;
     p.note = note;
 
-    // Wir haben extern bereits 10 kOhm Pull-up nach 3,3 V.
+    // There is already an external 10 kOhm pull-up to 3.3 V.
     pinMode(pin, INPUT);
 
     bool initialState = digitalRead(pin);
@@ -122,7 +135,7 @@ void initPaddle(
 
 
 // ------------------------------------------------------------
-// Paddle-Eingang abfragen
+// Read one paddle input
 // ------------------------------------------------------------
 
 PaddleEvent pollPaddle(PaddleInput &p)
@@ -138,13 +151,13 @@ PaddleEvent pollPaddle(PaddleInput &p)
 
 
     // --------------------------------------------------------
-    // Keine Aenderung
+    // No change
     // --------------------------------------------------------
 
     if (raw == p.stableState)
     {
-        // Falls die vermeintliche Flanke wieder verschwunden ist,
-        // war sie nur eine kurze Stoerung / Bounce.
+        // If the apparent edge is gone again, it was just a short
+        // glitch or some bounce.
         p.candidateActive = false;
 
         return event;
@@ -152,7 +165,7 @@ PaddleEvent pollPaddle(PaddleInput &p)
 
 
     // --------------------------------------------------------
-    // Neue moegliche Flanke
+    // Possible new edge
     // --------------------------------------------------------
 
     if (
@@ -169,7 +182,7 @@ PaddleEvent pollPaddle(PaddleInput &p)
 
 
     // --------------------------------------------------------
-    // Warten, bis sie 150 us stabil ist
+    // Wait until it has been stable for 150 us
     // --------------------------------------------------------
 
     if (
@@ -182,7 +195,7 @@ PaddleEvent pollPaddle(PaddleInput &p)
 
 
     // --------------------------------------------------------
-    // Flanke akzeptieren
+    // Accept the edge
     // --------------------------------------------------------
 
     p.stableState = p.candidateState;
@@ -191,10 +204,10 @@ PaddleEvent pollPaddle(PaddleInput &p)
     event.valid = true;
     event.note = p.note;
 
-    // Wegen des Pull-ups:
+    // Because of the pull-up:
     //
-    // LOW  = Paddle gedrueckt
-    // HIGH = Paddle losgelassen
+    // LOW  = paddle pressed
+    // HIGH = paddle released
 
     event.down = (p.stableState == LOW);
 
@@ -203,7 +216,7 @@ PaddleEvent pollPaddle(PaddleInput &p)
 
 
 // ------------------------------------------------------------
-// MIDI Event senden
+// Send a MIDI event
 // ------------------------------------------------------------
 
 void sendMidiEvent(const PaddleEvent &event)
@@ -238,7 +251,7 @@ void sendMidiEvent(const PaddleEvent &event)
 
 void setup()
 {
-    // Paddle-Eingaenge initialisieren
+    // Paddle inputs
 
     initPaddle(
         dit,
@@ -253,13 +266,13 @@ void setup()
     );
 
 
-    // USB-Bezeichnung
+    // USB descriptor strings
 
-    USB.productName("HaliKey MIDI");
-    USB.manufacturerName("DIY HaliKey");
+    USB.productName(USB_PRODUCT_NAME);
+    USB.manufacturerName(USB_MANUFACTURER);
 
 
-    // MIDI und USB starten
+    // Start MIDI and USB
 
     MIDI.begin();
     USB.begin();
@@ -267,7 +280,7 @@ void setup()
 
 
 // ------------------------------------------------------------
-// Hauptschleife
+// Main loop
 // ------------------------------------------------------------
 
 void loop()

@@ -1,0 +1,28 @@
+Frohrelle CW paddle interface
+Copyright (c) 2026 SimonRZz
+
+This project, meaning the firmware source code, the schematic and the
+documentation in this repository, is licensed under the Creative Commons
+Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0).
+
+What that means in practice:
+
+  * You may build it, modify it, and pass it on, in source or in hardware.
+  * You have to credit the author and point back to this repository, and say
+    if you changed anything.
+  * You may not use it commercially. That includes selling assembled units,
+    kits or bare boards based on this design, and including it in any product
+    or service that is sold.
+
+Commercial use requires written permission from the author. Ask first.
+
+The full and legally binding license text is available at:
+
+    https://creativecommons.org/licenses/by-nc/4.0/legalcode
+
+A plain language summary is at:
+
+    https://creativecommons.org/licenses/by-nc/4.0/
+
+The work is provided as is, without warranties of any kind, to the extent
+permitted by law. You key your own transmitter at your own risk.

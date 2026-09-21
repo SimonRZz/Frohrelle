@@ -1,12 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500" role="img" aria-label="Schaltplan: 3,5-mm-TRS-Paddlebuchse ueber RC-Netzwerk an ESP32-S3 GPIO4 und GPIO5">
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500" role="img" aria-label="Schematic: 3.5 mm TRS paddle socket connected through an RC network to ESP32-S3 GPIO4 and GPIO5">
   <rect x="0" y="0" width="800" height="500" rx="10" fill="#ffffff"/>
   <g font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="13" fill="#111827">
 
-    <text x="24" y="34" font-size="16" font-weight="bold">CW-Paddle-Eingang (je Kontakt identisch)</text>
+    <text x="24" y="34" font-size="16" font-weight="bold">CW paddle input (identical for each contact)</text>
 
     <!-- TRS jack -->
     <rect x="30" y="90" width="110" height="360" rx="8" fill="#f3f4f6" stroke="#374151" stroke-width="1.5"/>
-    <text x="85" y="114" text-anchor="middle" font-size="12" font-weight="bold">3,5-mm-TRS</text>
+    <text x="85" y="114" text-anchor="middle" font-size="12" font-weight="bold">3.5 mm TRS</text>
     <text x="126" y="125" text-anchor="end">TIP</text>
     <text x="126" y="325" text-anchor="end">RING</text>
     <text x="126" y="425" text-anchor="end">SLEEVE</text>
@@ -14,8 +14,8 @@
     <!-- MCU -->
     <rect x="560" y="90" width="200" height="360" rx="8" fill="#f3f4f6" stroke="#374151" stroke-width="1.5"/>
     <text x="660" y="114" text-anchor="middle" font-size="12" font-weight="bold">ESP32-S3</text>
-    <text x="574" y="125">GPIO4 &#8212; DIT</text>
-    <text x="574" y="325">GPIO5 &#8212; DAH</text>
+    <text x="574" y="125">GPIO4 (DIT)</text>
+    <text x="574" y="325">GPIO5 (DAH)</text>
     <text x="574" y="425">GND</text>
 
     <g stroke="#111827" stroke-width="2" fill="none" stroke-linecap="round">
@@ -73,10 +73,10 @@
     <text x="352" y="278" font-size="12">10 k&#8486;</text>
     <text x="360" y="160" font-size="12">1 nF</text>
     <text x="360" y="360" font-size="12">1 nF</text>
-    <text x="330" y="18" text-anchor="middle" font-size="12">+3,3 V</text>
-    <text x="330" y="218" text-anchor="middle" font-size="12">+3,3 V</text>
+    <text x="330" y="18" text-anchor="middle" font-size="12">+3.3 V</text>
+    <text x="330" y="218" text-anchor="middle" font-size="12">+3.3 V</text>
 
-    <text x="350" y="440" font-size="12" fill="#4b5563">Masse gemeinsam &#8212; Sleeve direkt an GND</text>
-    <text x="24" y="482" font-size="12" fill="#4b5563">DIT = Note 20 &#183; DAH = Note 21 &#183; MIDI-Kanal 1 &#183; gedr&#252;ckt = LOW</text>
+    <text x="350" y="440" font-size="12" fill="#4b5563">Common ground, sleeve straight to GND</text>
+    <text x="24" y="482" font-size="12" fill="#4b5563">DIT = note 20 &#183; DAH = note 21 &#183; MIDI channel 1 &#183; pressed = LOW</text>
   </g>
 </svg>

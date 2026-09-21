@@ -1,5 +1,7 @@
 # Frohrelle
 
+**A CW paddle to USB MIDI interface for SmartSDR.**
+
 A homebrew CW paddle interface. An ESP32-S3 registers itself on the computer as
 a USB MIDI device and reports both paddle contacts as MIDI notes. SmartSDR reads
 them as dit and dah and passes them to the keyer in the radio.

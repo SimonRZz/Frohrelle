@@ -66,3 +66,8 @@ bounce. Mount the capacitor as close to the GPIO pin as you can.
   cable, both close to the enclosure.
 * With a single lever paddle or a straight key, wire tip only. Ring stays HIGH
   through its pull-up and never sends anything.
+* If the interface is going to hang off an iPhone or iPad, the board runs on
+  whatever the phone hands out. Pick a board without a permanently lit RGB LED,
+  keep the USB cable short, and on a Lightning phone use a camera adapter with a
+  power socket. Nothing in this circuit draws a meaningful current itself: with
+  both paddle contacts closed the two pull-ups take about 0.6 mA together.

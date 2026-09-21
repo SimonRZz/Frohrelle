@@ -1,57 +1,62 @@
 # Frohrelle
 
-**A CW paddle to USB MIDI interface for SmartSDR.**
+**A CW paddle to USB MIDI interface for SmartSDR on the iPhone.**
 
-A homebrew CW paddle interface. An ESP32-S3 registers itself on the computer as
-a USB MIDI device and reports both paddle contacts as MIDI notes. SmartSDR reads
-them as dit and dah and passes them to the keyer in the radio.
+A homebrew CW paddle interface. An ESP32-S3 registers itself as a USB MIDI
+device and reports both paddle contacts as MIDI notes. SmartSDR reads them as
+dit and dah and hands them to the keyer in the radio.
 
-You need an ESP32-S3 board with native USB, a 3.5 mm stereo jack and a handful of
-passive parts.
+It was built for SmartSDR on an iPhone: paddle into the interface, interface
+into the phone, and you are keying. Since USB MIDI is a standard device class,
+the same box behaves the same way on an iPad or on a desktop running SmartSDR,
+with nothing to install anywhere.
+
+You need an ESP32-S3 board with native USB, a 3.5 mm stereo jack and a handful
+of passive parts.
 
 ## Why bother
 
-With SmartSDR the operator and the radio are often not in the same room, so the
-paddle has to plug into the PC that runs SmartSDR rather than into the
-transceiver. That is the gap this little box fills.
+Running SmartSDR on a phone puts the whole radio on the sofa, in the garden or
+in a hotel room. What it does not give you is a paddle. SSB and digital modes
+are fine on a touchscreen, CW is not, and keyboard style sending on a phone is
+no substitute for a paddle you have used for years. This box gives the phone a
+real paddle input.
 
 A few things it gets right:
 
-* USB MIDI is a standard device class. Windows, macOS and Linux pick the
-  interface up on their own. Nothing to install, no driver, no COM port juggling,
-  no second power supply.
+* USB MIDI is a standard device class. iOS, iPadOS, Windows, macOS and Linux all
+  pick the interface up by themselves. No driver, no companion app, no COM port
+  juggling, no second power supply.
 * The interface only ever reports "contact closed" and "contact open". Speed,
-  weighting, iambic mode, message memories and above all the sidetone stay in the
-  radio. The sidetone therefore does not wobble the way it does when a PC forms
-  the characters itself.
+  weighting, iambic mode, message memories and above all the sidetone stay in
+  the radio. The sidetone therefore does not wobble the way it does when the
+  phone or PC forms the characters itself.
 * Events go out the moment an edge is confirmed. Nothing is buffered up, and the
   debounce works in microseconds rather than milliseconds.
-* You key with your own paddle, iambic, exactly as you are used to, instead of
-  reaching for keyboard macros during a pile-up.
+* You key with your own paddle, iambic, exactly as you are used to.
 * Every part is standard stock. The firmware is a single Arduino sketch, and the
   pins, notes, channel, debounce time and device name are all constants at the
   top of it.
 
-It works equally well as a permanent fixture at the station and as something you
-throw in a rucksack: one board, one cable, and nothing to set up on whatever
-computer you plug it into.
+The whole station then fits in a jacket pocket: phone, interface, paddle, one
+short cable.
 
 ## How it works
 
 ```
-   Paddle          Interface                       Computer           Transceiver
-  +--------+     +--------------+               +----------+        +-----------+
-  |  DIT   |-----| GPIO4        |   USB MIDI    |          |  LAN   |  keyer,   |
-  |  DAH   |-----| GPIO5  ESP32 |-------------->| SmartSDR |------->|  sidetone |
-  |  GND   |-----| GND      -S3 |  note 20/21   |          |        |  TX       |
-  +--------+     +--------------+               +----------+        +-----------+
+   Paddle          Interface                     iPhone / iPad        Transceiver
+  +--------+     +--------------+               +------------+       +-----------+
+  |  DIT   |-----| GPIO4        |   USB MIDI    |  SmartSDR  |  WiFi |  keyer,   |
+  |  DAH   |-----| GPIO5  ESP32 |-------------->|            |------>|  sidetone |
+  |  GND   |-----| GND      -S3 |  note 20/21   |            |       |  TX       |
+  +--------+     +--------------+               +------------+       +-----------+
 ```
 
 Both paddle contacts sit at 3.3 V through a 10 kOhm pull-up and are pulled to
 ground when you press the paddle. The firmware polls both pins in the main loop:
 
-| Action          | Pin level | MIDI message                        |
-|-----------------|-----------|-------------------------------------|
+| Action          | Pin level | MIDI message                          |
+|-----------------|-----------|---------------------------------------|
 | DIT pressed     | LOW       | `Note On` 20, velocity 127, channel 1 |
 | DIT released    | HIGH      | `Note Off` 20, velocity 0, channel 1  |
 | DAH pressed     | LOW       | `Note On` 21, velocity 127, channel 1 |
@@ -72,13 +77,32 @@ window is about 0.5 % of a dot.
 | Ring    | DAH / right paddle | 5    |
 | Sleeve  | ground             | GND  |
 
+## Plugging it into an iPhone or iPad
+
+iOS and iPadOS support class compliant USB MIDI devices out of the box, so there
+is nothing to install and nothing to pair. The interface shows up as a MIDI
+source the moment it is connected. What matters is the cable and the current
+budget:
+
+* iPhone 15 and later, and the current iPads, have a USB-C port. A plain USB-C
+  cable is all you need.
+* Phones with a Lightning port need a Lightning to USB camera adapter. Take the
+  version that has a second Lightning socket for power and plug a charger into
+  it. An ESP32-S3 development board draws more than such an adapter is willing
+  to give out on its own, and iOS will refuse the device with a message about
+  the accessory needing too much power.
+* The same applies to a long USB cable with thin conductors. Keep it short.
+* The sketch never switches on WiFi or Bluetooth, so the board stays at its idle
+  current. If you want to shave off a few more milliamps, pick a board without a
+  permanently lit power or RGB LED.
+
 ## Building it
 
 Schematic, bill of materials and the reasoning behind each part are in
 [hardware/](hardware/).
 
-The short version, once per contact: 1 kOhm in series with the GPIO, 10 kOhm as a
-pull-up to 3.3 V, 1 nF to ground right at the pin. Sleeve goes straight to GND.
+The short version, once per contact: 1 kOhm in series with the GPIO, 10 kOhm as
+a pull-up to 3.3 V, 1 nF to ground right at the pin. Sleeve goes straight to GND.
 
 ## Firmware
 
@@ -88,32 +112,35 @@ The sketch, flashing instructions and the knobs you can turn are in
 Two things matter when flashing. The ESP32-S3 has to be built in **USB-OTG
 (TinyUSB)** mode, otherwise the USB MIDI class is not available at all. And the
 cable belongs on the native USB port of the S3, not on the UART bridge port that
-many boards also carry.
+many boards also carry. Flash it from a computer, then move it over to the phone.
 
 ## Setting it up in SmartSDR
 
-1. Plug the interface in. It appears as a MIDI input on the computer.
-2. In SmartSDR, select or enable the MIDI device and point it at the slice you
-   want to key.
-3. Switch to CW, then set keyer speed and iambic mode in the radio as usual and
-   pick your break-in setting.
+1. Connect the interface, start SmartSDR and connect to the radio as usual.
+2. Enable the interface as a MIDI input and point it at the slice you want to
+   key. Look for MIDI in the settings. The exact spot differs between the iOS
+   and the Windows version.
+3. Switch to CW, then set keyer speed and iambic mode in the radio and pick your
+   break-in setting.
 4. Test it with the PA off first. The sidetone should start while the paddle is
    closed and stop the instant you let go.
 
 If you want to know whether the notes leave the interface at all, any MIDI
-monitor will tell you, independently of SmartSDR: pressing should produce
+monitor app will tell you, independently of SmartSDR: pressing should produce
 `Note On 20` or `21`, releasing the matching `Note Off`.
 
 ## Troubleshooting
 
-| Symptom                                    | Cause and cure                                                                  |
-|--------------------------------------------|---------------------------------------------------------------------------------|
-| No MIDI device shows up                    | Cable on the UART port instead of the native USB port, or firmware built without TinyUSB mode |
-| Continuous tone right after plugging in    | Paddle contact closed, sleeve not on ground, or a missing pull-up                |
-| Dit and dah swapped                        | Swap `PIN_DIT` and `PIN_DAH` in the sketch, or use the paddle reverse setting in software |
+| Symptom                                     | Cause and cure                                                                  |
+|---------------------------------------------|---------------------------------------------------------------------------------|
+| iOS says the accessory needs too much power | Use a camera adapter with a power socket and feed it from a charger              |
+| Nothing shows up on the phone at all        | Charge-only cable, or a cable on the UART port of the board instead of the native USB port |
+| No MIDI device on a computer either         | Firmware built without TinyUSB mode                                             |
+| Continuous tone right after plugging in     | Paddle contact closed, sleeve not on ground, or a missing pull-up               |
+| Dit and dah swapped                         | Swap `PIN_DIT` and `PIN_DAH` in the sketch, or use the paddle reverse setting in the app |
 | Characters only break up while transmitting | RF getting in: ferrite on the paddle lead and the USB cable, and keep the 1 nF caps close to the pins |
-| Occasional doubled elements                | Bouncy paddle contacts: raise `EDGE_CONFIRM_US` step by step, 500 us is a good next try |
-| Compiler does not know `USBMIDI`           | The *USB Mode* board setting is not on *USB-OTG (TinyUSB)*                       |
+| Occasional doubled elements                 | Bouncy paddle contacts: raise `EDGE_CONFIRM_US` step by step, 500 us is a good next try |
+| Compiler does not know `USBMIDI`            | The *USB Mode* board setting is not on *USB-OTG (TinyUSB)*                      |
 
 ## Repository layout
 
@@ -127,9 +154,9 @@ platformio.ini                           build configuration for PlatformIO
 
 ## Status
 
-Working version, in use. The firmware deliberately does no timing work and has no
-extra bounce guard beyond the 150 us edge confirmation and the RC network on the
-input.
+Working version, in daily use with SmartSDR on an iPhone. The firmware
+deliberately does no timing work and has no extra bounce guard beyond the 150 us
+edge confirmation and the RC network on the input.
 
 ## License
 

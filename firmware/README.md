@@ -38,6 +38,10 @@ There is deliberately no keyer, no timing and no message memory on the device. I
 reports "contact closed" and "contact open" and nothing else. The timing is the
 job of the keyer in the transceiver.
 
+WiFi and Bluetooth are never started, which keeps the current draw low enough to
+run off a phone. Flash the board from a computer, then move it over to the phone
+or tablet you actually operate with.
+
 ## Things you can change
 
 | Constant in the sketch | What it does                                |

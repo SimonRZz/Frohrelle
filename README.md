@@ -1,4 +1,4 @@
-# Frohrelle
+# FrohrelleKey
 
 **A CW paddle to USB MIDI interface for SmartSDR on the iPhone.**
 
@@ -145,7 +145,7 @@ monitor app will tell you, independently of SmartSDR: pressing should produce
 ## Repository layout
 
 ```
-firmware/CWPaddleMIDI/CWPaddleMIDI.ino   Arduino sketch
+firmware/FrohrelleKey/FrohrelleKey.ino   Arduino sketch
 firmware/README.md                       flashing and customising
 hardware/schematic.svg                   schematic
 hardware/README.md                       bill of materials, part by part reasoning

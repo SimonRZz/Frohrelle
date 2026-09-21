@@ -1,5 +1,6 @@
 /*
-  CW Paddle Interface for SmartSDR
+  FrohrelleKey
+  CW paddle interface for SmartSDR
   ESP32-S3 -> USB MIDI -> SmartSDR
 
   Paddle:
@@ -31,8 +32,8 @@
 // its MIDI assignment per device name, so you have to select the
 // device again afterwards.
 
-constexpr char USB_PRODUCT_NAME[] = "Frohrelle CW";
-constexpr char USB_MANUFACTURER[] = "Frohrelle";
+constexpr char USB_PRODUCT_NAME[] = "FrohrelleKey";
+constexpr char USB_MANUFACTURER[] = "FrohrelleKey";
 
 
 // ------------------------------------------------------------

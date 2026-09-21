@@ -1,6 +1,6 @@
 # Firmware
 
-`CWPaddleMIDI/CWPaddleMIDI.ino`, an Arduino sketch for the ESP32-S3 with native
+`FrohrelleKey/FrohrelleKey.ino`, an Arduino sketch for the ESP32-S3 with native
 USB.
 
 ## Arduino IDE
@@ -17,7 +17,7 @@ USB.
 ## PlatformIO
 
 `platformio.ini` in the repository root already carries the build flags you need
-and points `src_dir` at `firmware/CWPaddleMIDI/`.
+and points `src_dir` at `firmware/FrohrelleKey/`.
 
 ```
 pio run -t upload

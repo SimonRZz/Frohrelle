@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500" role="img" aria-label="Schaltplan: 3,5-mm-TRS-Paddlebuchse ueber RC-Netzwerk an ESP32-S3 GPIO4 und GPIO5">
+  <rect x="0" y="0" width="800" height="500" rx="10" fill="#ffffff"/>
+  <g font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="13" fill="#111827">
+
+    <text x="24" y="34" font-size="16" font-weight="bold">CW-Paddle-Eingang (je Kontakt identisch)</text>
+
+    <!-- TRS jack -->
+    <rect x="30" y="90" width="110" height="360" rx="8" fill="#f3f4f6" stroke="#374151" stroke-width="1.5"/>
+    <text x="85" y="114" text-anchor="middle" font-size="12" font-weight="bold">3,5-mm-TRS</text>
+    <text x="126" y="125" text-anchor="end">TIP</text>
+    <text x="126" y="325" text-anchor="end">RING</text>
+    <text x="126" y="425" text-anchor="end">SLEEVE</text>
+
+    <!-- MCU -->
+    <rect x="560" y="90" width="200" height="360" rx="8" fill="#f3f4f6" stroke="#374151" stroke-width="1.5"/>
+    <text x="660" y="114" text-anchor="middle" font-size="12" font-weight="bold">ESP32-S3</text>
+    <text x="574" y="125">GPIO4 &#8212; DIT</text>
+    <text x="574" y="325">GPIO5 &#8212; DAH</text>
+    <text x="574" y="425">GND</text>
+
+    <g stroke="#111827" stroke-width="2" fill="none" stroke-linecap="round">
+
+      <!-- ===================== DIT / TIP ===================== -->
+      <line x1="140" y1="120" x2="200" y2="120"/>
+      <rect x="200" y="108" width="54" height="24" fill="#ffffff"/>
+      <line x1="254" y1="120" x2="560" y2="120"/>
+      <!-- pull-up -->
+      <line x1="330" y1="120" x2="330" y2="100"/>
+      <rect x="318" y="46" width="24" height="54" fill="#ffffff"/>
+      <line x1="330" y1="46" x2="330" y2="28"/>
+      <line x1="312" y1="28" x2="348" y2="28"/>
+      <!-- capacitor -->
+      <line x1="330" y1="120" x2="330" y2="150"/>
+      <line x1="310" y1="150" x2="350" y2="150"/>
+      <line x1="310" y1="160" x2="350" y2="160"/>
+      <line x1="330" y1="160" x2="330" y2="182"/>
+      <line x1="308" y1="182" x2="352" y2="182"/>
+      <line x1="316" y1="190" x2="344" y2="190"/>
+      <line x1="324" y1="198" x2="336" y2="198"/>
+
+      <!-- ===================== DAH / RING ===================== -->
+      <line x1="140" y1="320" x2="200" y2="320"/>
+      <rect x="200" y="308" width="54" height="24" fill="#ffffff"/>
+      <line x1="254" y1="320" x2="560" y2="320"/>
+      <!-- pull-up -->
+      <line x1="330" y1="320" x2="330" y2="300"/>
+      <rect x="318" y="246" width="24" height="54" fill="#ffffff"/>
+      <line x1="330" y1="246" x2="330" y2="228"/>
+      <line x1="312" y1="228" x2="348" y2="228"/>
+      <!-- capacitor -->
+      <line x1="330" y1="320" x2="330" y2="350"/>
+      <line x1="310" y1="350" x2="350" y2="350"/>
+      <line x1="310" y1="360" x2="350" y2="360"/>
+      <line x1="330" y1="360" x2="330" y2="382"/>
+      <line x1="308" y1="382" x2="352" y2="382"/>
+      <line x1="316" y1="390" x2="344" y2="390"/>
+      <line x1="324" y1="398" x2="336" y2="398"/>
+
+      <!-- ===================== SLEEVE ===================== -->
+      <line x1="140" y1="420" x2="560" y2="420"/>
+    </g>
+
+    <!-- junction dots -->
+    <g fill="#111827">
+      <circle cx="330" cy="120" r="4"/>
+      <circle cx="330" cy="320" r="4"/>
+    </g>
+
+    <!-- labels -->
+    <text x="227" y="102" text-anchor="middle" font-size="12">1 k&#8486;</text>
+    <text x="227" y="302" text-anchor="middle" font-size="12">1 k&#8486;</text>
+    <text x="352" y="78" font-size="12">10 k&#8486;</text>
+    <text x="352" y="278" font-size="12">10 k&#8486;</text>
+    <text x="360" y="160" font-size="12">1 nF</text>
+    <text x="360" y="360" font-size="12">1 nF</text>
+    <text x="330" y="18" text-anchor="middle" font-size="12">+3,3 V</text>
+    <text x="330" y="218" text-anchor="middle" font-size="12">+3,3 V</text>
+
+    <text x="350" y="440" font-size="12" fill="#4b5563">Masse gemeinsam &#8212; Sleeve direkt an GND</text>
+    <text x="24" y="482" font-size="12" fill="#4b5563">DIT = Note 20 &#183; DAH = Note 21 &#183; MIDI-Kanal 1 &#183; gedr&#252;ckt = LOW</text>
+  </g>
+</svg>

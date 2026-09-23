@@ -1,13 +1,13 @@
 # FrohrelleKey
 
-**A CW paddle to USB MIDI interface for SmartSDR on the iPhone.**
+**A CW paddle to USB MIDI interface for SmartSDR on the iPhone and on MacOS.**
 
 A homebrew CW paddle interface. An ESP32-S3 registers itself as a USB MIDI
 device and reports both paddle contacts as MIDI notes. SmartSDR reads them as
 dit and dah and hands them to the keyer in the radio.
 
-It was built for SmartSDR on an iPhone: paddle into the interface, interface
-into the phone, and you are keying. The radio does not have to be anywhere near
+It was built for SmartSDR on an iPhone but does also work with SmartSDR on MacOS: paddle into the interface, interface
+into the phone/Mac, and you are keying. The radio does not have to be anywhere near
 you, since the app reaches it over the local network or over the internet. And
 because USB MIDI is a standard device class, the same box behaves the same way
 on an iPad or on a desktop running SmartSDR, with nothing to install anywhere.
